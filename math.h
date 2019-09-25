@@ -118,12 +118,12 @@ struct Cube
 
     Cube()
     {
-        auto color0 = hexToColor(0x474b6cff);
-        auto color1 = hexToColor(0x08b493ff);
-        auto color2 = hexToColor(0x796690ff);
-        auto color3 = hexToColor(0x7f8acdff);
-        auto color4 = hexToColor(0x536872ff);
-        auto color5 = hexToColor(0xcae00dff);
+        auto color0 = hexToColor(0xDE9151FF);
+        auto color1 = hexToColor(0xF34213FF);
+        auto color2 = hexToColor(0x2E2E3AFF);
+        auto color3 = hexToColor(0xBC5D2EFF);
+        auto color4 = hexToColor(0xBBB8B2FF);
+        auto color5 = hexToColor(0x7CE577FF);
 
         vertices = {
             {-0.5, -0.5, 0.5, 1, color0},

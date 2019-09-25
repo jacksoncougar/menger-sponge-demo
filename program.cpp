@@ -1,5 +1,6 @@
+#define MOUSE_SENSITIVITY 200
 #define GLEW_STATIC
-#define MENGER_DEPTH 4
+#define MENGER_DEPTH 3
 /**
  * @file grpahics-assignment-1-part1.cpp
  * @author your name (you@domain.com)
@@ -15,29 +16,42 @@
 #include "math.h"
 #include <cmath>
 #include <iostream>
-#include <algorithm>
+#include <fstream>
+#include <sstream>
 
-void print_error(int, const char *c);
-void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods);
+void error_callback(int, const char *c);
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
+
+void toggle_shader();
 
 void menger(mat4x4 root,
             std::vector<mat4x4> &instances,
             const int iteration);
 
-void menger(const Cube &cube, const int iteration);
+void update_instances(GLuint instancebuffer, unsigned int iterations);
 
 void window_size_callback(GLFWwindow *window, int width, int height);
 
-static void cursor_position_callback(GLFWwindow *window, double xpos, double ypos);
+void cursor_position_callback(GLFWwindow *window, double xpos, double ypos);
 
-GLuint loadShaders();
+GLuint create_shader_program(std::string vertexShaderFilename,
+                             std::string fragmentShaderFilename);
 
+int iterations = MENGER_DEPTH;
+int instancecount = 1;
 float rotation = 0.0;
+float rotation2 = 0.0;
+float zoom = 0;
+float mx = 0 / 0, my = 0 / 0; // Nan
+GLuint currentprogram(0);
+GLuint program1;
+GLuint program2;
+
+GLuint instancebuffer;
 
 int main()
 {
     Cube test;
-
     GLFWwindow *window;
 
     if (!glfwInit())
@@ -45,7 +59,7 @@ int main()
         return -1;
     }
 
-    glfwSetErrorCallback(print_error);
+    glfwSetErrorCallback(error_callback);
 
     glfwWindowHint(GLFW_DEPTH_BITS, GLFW_TRUE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
@@ -69,7 +83,7 @@ int main()
         return -1;
     }
 
-    glfwSetKeyCallback(window, key_handler);
+    glfwSetKeyCallback(window, key_callback);
 
     if (glfwRawMouseMotionSupported())
     {
@@ -80,19 +94,18 @@ int main()
     glfwSetWindowSizeCallback(window, window_size_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
 
-    auto version = (const unsigned char *)glGetString(GL_VERSION);
-    std::cout << version << std::endl;
+    {
+        auto version = (const unsigned char *)glGetString(GL_VERSION);
+        std::cout << version << std::endl;
+    }
 
     glfwSwapInterval(1);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    float fov = 70.0;
+    float fov = 30.0;
     float aspect = width / height;
     float near = 1;
-    float far = 500.0;
     float top = tanf(fov * M_PI / 360.0) * near;
+    float far = 500.0;
     float bottom = -top;
     float left = aspect * bottom;
     float right = aspect * top;
@@ -101,25 +114,23 @@ int main()
     mat4x4 view(1, 0, 0, 0,
                 0, cos(rotation), -sin(rotation), 0,
                 0, sin(rotation), cos(rotation), 0,
-                0, 0, -3, 1);
+                0, 0, -2 + zoom, 1);
     mat4x4 projection(
         2 * near / (right - left), 0, (right + left) / (right - left), 0,
         0, 2 * near / (top - bottom), (top + bottom) / (top - bottom), 0,
         0, 0, -(far + near) / (far - near), -2 * far * near / (far - near),
         0, 0, -1, 0);
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-    // glVertexPointer(4, GL_FLOAT, 32, &test.vertices[0].position);
-    // glColorPointer(4, GL_FLOAT, 32, &test.vertices[0].color);
-
-    auto program = loadShaders();
+    program1 = create_shader_program("shaders/vertex-shader.glsl",
+                                     "shaders/fragment-shader.glsl");
+    program2 = create_shader_program("shaders/vertex-shader-flat.glsl",
+                                     "shaders/fragment-shader-flat.glsl");
+    toggle_shader();
 
     GLuint arraybuffer;
-    GLuint instancebuffer;
     GLuint vao;
 
     std::vector<mat4x4> instances = {};
@@ -128,12 +139,13 @@ int main()
     menger(mat4x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),
            instances,
            MENGER_DEPTH);
+    instancecount = instances.size();
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    glGenBuffers(1, &test.vertexbufferid);
-    glBindBuffer(GL_ARRAY_BUFFER, test.vertexbufferid);
+    glGenBuffers(1, &arraybuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, arraybuffer);
     glBufferData(GL_ARRAY_BUFFER,
                  sizeof(Vertex) * test.vertices.size(),
                  &test.vertices[0],
@@ -144,16 +156,7 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(mat4x4) * instances.size(),
                  &instances[0], GL_STATIC_DRAW);
 
-    glUseProgram(program);
-    auto projection_uniform_location =
-        glGetUniformLocation(program, "projection");
-    auto view_uniform_location =
-        glGetUniformLocation(program, "view");
-
-    glUniformMatrix4fv(projection_uniform_location, 1, false, &projection.m00);
-    glUniformMatrix4fv(view_uniform_location, 1, false, &view.m00);
-
-    glBindBuffer(GL_ARRAY_BUFFER, test.vertexbufferid);
+    glBindBuffer(GL_ARRAY_BUFFER, arraybuffer);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -199,19 +202,33 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
-        // todo draw
+        // update scene rotation
+        mat4x4 R1(cos(rotation), 0, sin(rotation), 0,
+                  0, 1, 0, 0,
+                  -sin(rotation), 0, cos(rotation), 0,
+                  0, 0, 0, 1);
 
-        mat4x4 view(1, 0, 0, 0,
-                    0, cos(rotation), -sin(rotation), 0,
-                    0, sin(rotation), cos(rotation), 0,
-                    0, 0, -1, 1);
-        glUniformMatrix4fv(view_uniform_location, 1, false, &view.m00);
+        mat4x4 R2(1, 0, 0, 0,
+                  0, cos(rotation2), -sin(rotation2), 0,
+                  0, sin(rotation2), cos(rotation2), 0,
+                  0, 0, -2 + zoom, 1);
+        R1.multiply(R2);
+
+        auto projection_uniform_location =
+            glGetUniformLocation(currentprogram, "projection");
+        auto view_uniform_location =
+            glGetUniformLocation(currentprogram, "view");
+
+        glUniformMatrix4fv(projection_uniform_location, 1, false, &projection.m00);
+        glUniformMatrix4fv(view_uniform_location, 1, false, &R1.m00);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glBindVertexArray(vao);
-        glDrawArraysInstanced(GL_QUADS, 0,
-                              test.vertices.size(), instances.size());
+        glDrawArraysInstanced(GL_QUADS,
+                              0,
+                              test.vertices.size(),
+                              instancecount);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -275,67 +292,92 @@ void menger(mat4x4 root,
         menger(O, instances, iteration - 1);
     }
 }
-void menger(const Cube &cube, const int iteration)
+
+void update_instances(GLuint instancebuffer, unsigned int iterations)
 {
-    if (iteration < 1)
-    {
+    std::vector<mat4x4> instances = {};
+    instances.reserve(pow(20, iterations));
 
-        glDrawArrays(GL_QUADS, 0, cube.vertices.size());
+    menger(mat4x4(1, 0, 0, 0,
+                  0, 1, 0, 0,
+                  0, 0, 1, 0,
+                  0, 0, 0, 1),
+           instances,
+           iterations);
 
-        return;
-    }
-
-    glPushMatrix();
-    glScaled(1. / 3, 1. / 3, 1. / 3);
-    for (auto location : locations)
-    {
-        glPushMatrix();
-        glTranslated(location.x, location.y, location.z);
-        menger(cube, iteration - 1);
-        glPopMatrix();
-    }
-    glPopMatrix();
+    glBindBuffer(GL_ARRAY_BUFFER, instancebuffer);
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(mat4x4) * instances.size(),
+                 &instances[0],
+                 GL_DYNAMIC_DRAW);
+    instancecount = instances.size();
 }
 
-void print_error(int, const char *c)
+void error_callback(int, const char *c)
 {
     std::cout << c;
 }
 
-static void cursor_position_callback(GLFWwindow *window,
-                                     double xpos,
-                                     double ypos)
+void cursor_position_callback(GLFWwindow *window,
+                              double x,
+                              double y)
 {
-    int amount = static_cast<int>(xpos) % 360;
-    rotation = amount * 0.02;
-    std::cout << rotation << std::endl;
+    if (isnan(mx) || isnan(my))
+    {
+        mx = x;
+        my = y;
+        return;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+    {
+        zoom += (my - y) / MOUSE_SENSITIVITY;
+    }
+    else
+    {
+        rotation += (mx - x) / MOUSE_SENSITIVITY;
+        rotation2 += (my - y) / MOUSE_SENSITIVITY;
+    }
+
+    mx = x;
+    my = y;
 }
 
 void window_size_callback(GLFWwindow *window, int width, int height)
 {
-    glViewport(0, 0, width, height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    float fov = 70.0;
-    float aspect = width / static_cast<float>(height);
-    float near = .30;
-    float far = 500.0;
-    float top = tanf(fov * M_PI / 360.0) * near;
-    float bottom = -top;
-    float left = aspect * bottom;
-    float right = aspect * top;
-    float angle = 0.0;
-
-    glFrustum(left, right, bottom, top, near, far);
+    // todo update the View and Projection matrices.
 }
 
-void key_handler(GLFWwindow *window, int key, int scancode, int action, int mods)
+void key_callback(GLFWwindow *window,
+                  int key,
+                  int scancode,
+                  int action,
+                  int mods)
 {
-    return;
+    if (key == GLFW_KEY_F8 && action == GLFW_PRESS)
+        toggle_shader();
+    if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
+        update_instances(instancebuffer,
+                         iterations > 0 ? --iterations : 0);
+    if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
+        update_instances(instancebuffer,
+                         iterations < 5 ? ++iterations : 5);
 }
 
-GLuint loadShaders()
+void toggle_shader()
+{
+    if (currentprogram == program1)
+    {
+        glUseProgram(program2);
+        currentprogram = program2;
+    }
+    else
+    {
+        glUseProgram(program1);
+        currentprogram = program1;
+    }
+}
+GLuint create_shader_program(std::string vertexShaderFilename,
+                             std::string fragmentShaderFilename)
 {
     typedef GLuint ProgramID;
     typedef GLuint ShaderID;
@@ -343,21 +385,27 @@ GLuint loadShaders()
     ShaderID vertex = glCreateShader(GL_VERTEX_SHADER);
     ShaderID fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
+    std::ifstream file(vertexShaderFilename);
+    if (!file.is_open())
     {
-        std::string source = ""
-                             "#version 330 core\n"
-                             "layout(location = 0) in vec4 position;"
-                             "layout(location = 1) in vec4 color;"
-                             "layout(location = 2) in mat4x4 instanceWorld;"
-                             "uniform mat4x4 projection;"
-                             "uniform mat4x4 view;"
-                             "out vec4 vcolor;"
-                             "void main() {"
-                             "  gl_Position.xyzw = projection * view * instanceWorld * position;"
-                             "  vcolor = color;"
-                             "}";
+        throw;
+    }
+    std::string vertexShaderSource(
+        (std::istreambuf_iterator<char>(file)),
+        std::istreambuf_iterator<char>());
 
-        const char *sourcePointer = source.c_str();
+    file.close();
+    file.open(fragmentShaderFilename, std::ios_base::in);
+    if (!file.is_open())
+    {
+        throw;
+    }
+    std::string fragmentShaderSource(
+        (std::istreambuf_iterator<char>(file)),
+        std::istreambuf_iterator<char>());
+
+    {
+        const char *sourcePointer = vertexShaderSource.c_str();
         glShaderSource(vertex, 1, &sourcePointer, nullptr);
         glCompileShader(vertex);
 
@@ -376,15 +424,7 @@ GLuint loadShaders()
         }
     }
     {
-        std::string source = ""
-                             "#version 330 core\n"
-                             "in vec4 vcolor;"
-                             "out vec4 color;"
-                             "void main() {"
-                             "  color = vcolor;"
-                             "}";
-
-        const char *sourcePointer = source.c_str();
+        const char *sourcePointer = fragmentShaderSource.c_str();
         glShaderSource(fragment, 1, &sourcePointer, nullptr);
         glCompileShader(fragment);
 
