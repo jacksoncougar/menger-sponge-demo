@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <random>
+#include <gl/GLU.h>
 
 #define M_PI 3.141592653589793238462643
 
@@ -26,17 +27,17 @@ public:
         : x(x), y(y), z(z), w(w) {}
 };
 
-struct Matrix4f
+struct mat4x4
 {
     float m00, m01, m02, m03,
         m10, m11, m12, m13,
         m20, m21, m22, m23,
         m30, m31, m32, m33;
 
-    Matrix4f(float m00, float m01, float m02, float m03,
-             float m10, float m11, float m12, float m13,
-             float m20, float m21, float m22, float m23,
-             float m30, float m31, float m32, float m33)
+    mat4x4(float m00, float m01, float m02, float m03,
+           float m10, float m11, float m12, float m13,
+           float m20, float m21, float m22, float m23,
+           float m30, float m31, float m32, float m33)
         : m00(m00), m01(m01), m02(m02), m03(m03),
           m10(m10), m11(m11), m12(m12), m13(m13),
           m20(m20), m21(m21), m22(m22), m23(m23),
@@ -50,7 +51,7 @@ struct Matrix4f
         vector.x = m30 * vector.x + m31 * vector.y + m32 * vector.z + m33 * vector.w;
     }
 
-    void multiply(const Matrix4f &o)
+    void multiply(const mat4x4 &o)
     {
         float t0, t1, t2, t3;
         t0 = m00 * o.m00 + m01 * o.m10 + m02 * o.m20 + m03 * o.m30;
@@ -111,6 +112,8 @@ Vector4f hexToColor(unsigned int color)
 
 struct Cube
 {
+    GLuint vertexbufferid;
+
     std::vector<Vertex> vertices;
 
     Cube()
