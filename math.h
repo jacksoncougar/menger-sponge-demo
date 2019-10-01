@@ -25,6 +25,11 @@ struct Vector4f
 public:
     Vector4f(const float x, const float y, const float z, const float w)
         : x(x), y(y), z(z), w(w) {}
+
+    float operator[](int index)
+    {
+        return ((float *)(&x))[index];
+    }
 };
 
 struct mat4x4

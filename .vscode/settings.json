@@ -47,6 +47,13 @@
         "xtr1common": "cpp",
         "xutility": "cpp",
         "random": "cpp",
-        "algorithm": "cpp"
-    }
+        "algorithm": "cpp",
+        "cctype": "cpp",
+        "sstream": "cpp",
+        "string": "cpp"
+    },
+    "cSpell.words": [
+        "Luint",
+        "glfw"
+    ]
 }
