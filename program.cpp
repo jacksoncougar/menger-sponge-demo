@@ -5,7 +5,7 @@
 #define LEGACY true
 
 /**
- * @file grpahics-assignment-1-part1.cpp
+ * @file grahics-assignment-1-part1.cpp
  * @author your name (you@domain.com)
  * @brief 
  * @version 0.1
@@ -23,21 +23,17 @@
 #include <fstream>
 #include <sstream>
 
-void error_callback(int, const char *c);
-
-void key_callback(GLFWwindow *window, int key,
-                  int scancode, int action, int mods);
+void key_callback(GLFWwindow *window,
+                  int key,
+                  int scancode,
+                  int action,
+                  int mods);
 
 void toggle_shader();
 
 void capture_mouse(GLFWwindow *window);
 
 void release_mouse(GLFWwindow *window);
-
-void menger(mat4x4 root,
-            std::vector<mat4x4> &instances,
-            const int iteration);
-
 void update_instances(GLuint instancebuffer, unsigned int iterations);
 
 void window_size_callback(GLFWwindow *window, int width, int height);
@@ -46,8 +42,6 @@ void mouse_button_callback(GLFWwindow *window,
                            int button, int action, int mods);
 
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos);
-
-void create_vao();
 
 GLuint create_shader_program(std::string vertexShaderFilename,
                              std::string fragmentShaderFilename);
@@ -148,33 +142,9 @@ void initialize_modern_gl()
     g_gl.program2 = create_shader_program("shaders/vertex-shader-flat.glsl",
                                           "shaders/fragment-shader-flat.glsl");
     toggle_shader();
-    create_vao();
+
     update_view_matrix();
     update_projection_matrix();
-}
-
-void initialize_legacy_gl()
-{
-
-    static Cube cube;
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    float fov = 70.0;
-    float aspect = g_viewport.width / g_viewport.height;
-    float near = .30;
-    float far = 500.0;
-    float top = tanf(fov * M_PI / 360.0) * near;
-    float bottom = -top;
-    float left = aspect * bottom;
-    float right = aspect * top;
-    float angle = 0.0;
-
-    glFrustum(left, right, bottom, top, near, far);
-
-    glVertexPointer(4, GL_FLOAT, sizeof(Vertex), &cube.vertices[0].position);
-    glColorPointer(4, GL_FLOAT, sizeof(Vertex), &cube.vertices[0].color);
 }
 
 void menger(const int iteration)
@@ -197,19 +167,6 @@ void menger(const int iteration)
     glPopMatrix();
 }
 
-void draw_legacy_gl(GLFWwindow *window)
-{
-    glBegin(GL_QUADS);
-    glPushMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslated(0, 0, -1.5);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    menger(g_gl.iterations);
-    glPopMatrix();
-    glEnd();
-}
-
 int main()
 {
     GLFWwindow *window;
@@ -220,8 +177,6 @@ int main()
     {
         return -1;
     }
-
-    glfwSetErrorCallback(error_callback);
 
     glfwWindowHint(GLFW_DEPTH_BITS, GLFW_TRUE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
@@ -255,21 +210,28 @@ int main()
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSwapInterval(1);
 
-    // init glew
-
-    // if (glewInit() != GLEW_OK)
-    // {
-    //     glfwTerminate();
-    //     return -1;
-    // }
-
-    if (LEGACY)
     {
-        initialize_legacy_gl();
-    }
-    else
-    {
-        initialize_modern_gl();
+        static Cube cube;
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+
+        float fov = 70.0;
+        float aspect = g_viewport.width / g_viewport.height;
+        float near = .30;
+        float far = 500.0;
+        float top = tanf(fov * M_PI / 360.0) * near;
+        float bottom = -top;
+        float left = aspect * bottom;
+        float right = aspect * top;
+        float angle = 0.0;
+
+        glFrustum(left, right, bottom, top, near, far);
+
+        glVertexPointer(4, GL_FLOAT, sizeof(Vertex),
+                        &cube.vertices[0].position);
+        glColorPointer(4, GL_FLOAT, sizeof(Vertex),
+                       &cube.vertices[0].color);
     }
 
     // start render loop
@@ -277,16 +239,17 @@ int main()
     float time = 0;
     while (!glfwWindowShouldClose(window))
     {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // glBegin(GL_QUADS);
 
-        if (LEGACY)
-        {
-            draw_legacy_gl(window);
-        }
-        else
-        {
-            draw_modern_gl(window);
-        }
+        glPushMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glTranslated(0, 0, -1.5);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        menger(g_gl.iterations);
+        glPopMatrix();
+
+        // glEnd();
 
         glfwPollEvents();
         glfwSwapBuffers(window);
@@ -296,60 +259,6 @@ int main()
     glfwTerminate();
 
     return 0;
-}
-
-void menger(mat4x4 root,
-            std::vector<mat4x4> &instances,
-            const int iteration)
-{
-    if (iteration < 1)
-    {
-        instances.emplace_back(root);
-        return;
-    }
-
-    for (auto location : locations)
-    {
-        mat4x4 O = root;
-        mat4x4 S(1. / 3, 0, 0, 0,
-                 0, 1. / 3, 0, 0,
-                 0, 0, 1. / 3, 0,
-                 0, 0, 0, 1);
-        mat4x4 T(1, 0, 0, 0,
-                 0, 1, 0, 0,
-                 0, 0, 1, 0,
-                 location.x, location.y, location.z, 1);
-
-        T.multiply(S);
-        O.multiply(T);
-
-        menger(O, instances, iteration - 1);
-    }
-}
-
-void update_instances(GLuint instancebuffer, unsigned int iterations)
-{
-    std::vector<mat4x4> instances = {};
-    instances.reserve(pow(20, iterations));
-
-    menger(mat4x4(1, 0, 0, 0,
-                  0, 1, 0, 0,
-                  0, 0, 1, 0,
-                  0, 0, 0, 1),
-           instances,
-           iterations);
-
-    glBindBuffer(GL_ARRAY_BUFFER, instancebuffer);
-    glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(mat4x4) * instances.size(),
-                 &instances[0],
-                 GL_DYNAMIC_DRAW);
-    g_gl.instancecount = instances.size();
-}
-
-void error_callback(int, const char *c)
-{
-    std::cout << c;
 }
 
 void cursor_position_callback(GLFWwindow *window,
@@ -387,7 +296,11 @@ void cursor_position_callback(GLFWwindow *window,
 
 void update_view_matrix()
 {
+    return;
     auto scale = g_camera.mode == Camera::Projection::PERSPECTIVE ? g_camera.zoom : 1;
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
     mat4x4 S(scale, 0, 0, 0,
              0, scale, 0, 0,
              0, 0, scale, 0,
@@ -412,22 +325,12 @@ void update_view_matrix()
     R1.multiply(R2);
     S.multiply(R1);
 
-    {
-        auto view_uniform_location =
-            glGetUniformLocation(g_gl.program1, "view");
-
-        glUniformMatrix4fv(view_uniform_location, 1, false, &S.m00);
-    }
-    {
-        auto view_uniform_location =
-            glGetUniformLocation(g_gl.program2, "view");
-
-        glUniformMatrix4fv(view_uniform_location, 1, false, &S.m00);
-    }
+    // glLoadMatrixf(&S.m00);
 }
 
 void update_projection_matrix()
 {
+    return;
     float fov = 30.0;
     float aspect = static_cast<float>(g_viewport.width) / g_viewport.height;
     float near = 0.01;
@@ -437,36 +340,28 @@ void update_projection_matrix()
     float left = aspect * bottom;
     float right = aspect * top;
 
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
     if (g_camera.mode == Camera::Projection::PERSPECTIVE)
     {
-        mat4x4 projection(
-            2 * near / (right - left), 0, (right + left) / (right - left), 0,
-            0, 2 * near / (top - bottom), (top + bottom) / (top - bottom), 0,
-            0, 0, -(far + near) / (far - near), -2 * far * near / (far - near),
-            0, 0, -1, 0);
+        // mat4x4 projection(
+        //     2 * near / (right - left), 0, (right + left) / (right - left), 0,
+        //     0, 2 * near / (top - bottom), (top + bottom) / (top - bottom), 0,
+        //     0, 0, -(far + near) / (far - near), -2 * far * near / (far - near),
+        //     0, 0, -1, 0);
 
-        {
-            auto projection_uniform_location =
-                glGetUniformLocation(g_gl.currentProgram, "projection");
-
-            glUniformMatrix4fv(projection_uniform_location, 1, true, &projection.m00);
-        }
+        // glLoadMatrixf(&projection.m00);
     }
     else
     {
-        auto right = 0.5 * aspect / g_camera.zoom;
-        auto top = 0.5 / g_camera.zoom;
-        mat4x4 projection(
-            1. / right, 0, 0, 0,
-            0, 1. / top, 0, 0,
-            0, 0, -2. / (far - near), -((far + near) / (far - near)),
-            0, 0, 0, 1.);
-        {
-            auto projection_uniform_location =
-                glGetUniformLocation(g_gl.currentProgram, "projection");
-
-            glUniformMatrix4fv(projection_uniform_location, 1, true, &projection.m00);
-        }
+        // auto right = 0.5 * aspect / g_camera.zoom;
+        // auto top = 0.5 / g_camera.zoom;
+        // mat4x4 projection(
+        //     1. / right, 0, 0, 0,
+        //     0, 1. / top, 0, 0,
+        //     0, 0, -2. / (far - near), -((far + near) / (far - near)),
+        //     0, 0, 0, 1.);
+        // glLoadMatrixf(&projection.m00);
     }
 }
 
@@ -503,11 +398,9 @@ void key_callback(GLFWwindow *window,
         update_projection_matrix();
     }
     if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
-        update_instances(g_gl.instancebuffer,
-                         g_gl.iterations > 0 ? --g_gl.iterations : 0);
+        g_gl.iterations > 0 ? --g_gl.iterations : 0;
     if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
-        update_instances(g_gl.instancebuffer,
-                         g_gl.iterations < MAX_MENGER_DEPTH ? ++g_gl.iterations : MAX_MENGER_DEPTH);
+        g_gl.iterations < MAX_MENGER_DEPTH ? ++g_gl.iterations : MAX_MENGER_DEPTH;
 }
 
 void release_mouse(GLFWwindow *window)
@@ -545,75 +438,6 @@ void toggle_shader()
     }
     update_view_matrix();
     update_projection_matrix();
-}
-
-void create_vao()
-{
-    Cube cube;
-    std::vector<mat4x4> instances = {};
-    instances.reserve(pow(20, MENGER_DEPTH));
-
-    menger(mat4x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),
-           instances,
-           MENGER_DEPTH);
-    g_gl.instancecount = instances.size();
-
-    glGenVertexArrays(1, &g_gl.vao);
-    glBindVertexArray(g_gl.vao);
-
-    glGenBuffers(1, &g_gl.arraybuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, g_gl.arraybuffer);
-    glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(Vertex) * cube.vertices.size(),
-                 &cube.vertices[0],
-                 GL_STATIC_DRAW);
-    g_gl.elementCount = cube.vertices.size();
-
-    glGenBuffers(1, &g_gl.instancebuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, g_gl.instancebuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(mat4x4) * instances.size(),
-                 &instances[0], GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, g_gl.arraybuffer);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(0,
-                          4,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(Vertex),
-                          (void *)0);
-
-    glVertexAttribPointer(1,
-                          4,
-                          GL_FLOAT,
-                          GL_TRUE,
-                          sizeof(Vertex),
-                          (void *)sizeof(Vector4f));
-
-    glBindBuffer(GL_ARRAY_BUFFER, g_gl.instancebuffer);
-    glEnableVertexAttribArray(2);
-    glEnableVertexAttribArray(3);
-    glEnableVertexAttribArray(4);
-    glEnableVertexAttribArray(5);
-
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_TRUE, sizeof(mat4x4),
-                          (void *)0);
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_TRUE, sizeof(mat4x4),
-                          (void *)(1 * sizeof(Vector4f)));
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_TRUE, sizeof(mat4x4),
-                          (void *)(2 * sizeof(Vector4f)));
-    glVertexAttribPointer(5, 4, GL_FLOAT, GL_TRUE, sizeof(mat4x4),
-                          (void *)(3 * sizeof(Vector4f)));
-
-    glVertexAttribDivisor(2, 1);
-    glVertexAttribDivisor(3, 1);
-    glVertexAttribDivisor(4, 1);
-    glVertexAttribDivisor(5, 1);
-
-    glBindVertexArray(0);
 }
 
 GLuint create_shader_program(std::string vertexShaderFilename,
