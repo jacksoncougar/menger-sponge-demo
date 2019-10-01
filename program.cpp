@@ -2,7 +2,7 @@
 #define GLEW_STATIC
 #define MENGER_DEPTH 3
 #define MAX_MENGER_DEPTH 7
-#define LEGACY false
+#define LEGACY true
 
 /**
  * @file grpahics-assignment-1-part1.cpp
@@ -107,6 +107,29 @@ MessageCallback(GLenum source,
     std::cout << message << std::endl;
 }
 
+std::vector<Vector4f> locations = {
+    {-1, -1, -1, 1},
+    {-1, 0, -1, 1},
+    {-1, 1, -1, 1},
+    {0, -1, -1, 1},
+    {0, 1, -1, 1},
+    {1, -1, -1, 1},
+    {1, 0, -1, 1},
+    {1, 1, -1, 1},
+    {-1, -1, 0, 1},
+    {-1, 1, 0, 1},
+    {1, -1, 0, 1},
+    {1, 1, 0, 1},
+    {-1, -1, 1, 1},
+    {-1, 0, 1, 1},
+    {-1, 1, 1, 1},
+    {0, -1, 1, 1},
+    {0, 1, 1, 1},
+    {1, -1, 1, 1},
+    {1, 0, 1, 1},
+    {1, 1, 1, 1},
+};
+
 void initialize_modern_gl()
 {
     glDebugMessageCallback(MessageCallback, nullptr);
@@ -132,6 +155,9 @@ void initialize_modern_gl()
 
 void initialize_legacy_gl()
 {
+
+    static Cube cube;
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
@@ -173,13 +199,13 @@ void menger(const int iteration)
 
 void draw_legacy_gl(GLFWwindow *window)
 {
-    glBegin();
+    glBegin(GL_QUADS);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glTranslated(0, 0, -1.5);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    menger(cube, g_gl.iterations);
+    menger(g_gl.iterations);
     glPopMatrix();
     glEnd();
 }
@@ -231,11 +257,11 @@ int main()
 
     // init glew
 
-    if (glewInit() != GLEW_OK)
-    {
-        glfwTerminate();
-        return -1;
-    }
+    // if (glewInit() != GLEW_OK)
+    // {
+    //     glfwTerminate();
+    //     return -1;
+    // }
 
     if (LEGACY)
     {
@@ -271,50 +297,6 @@ int main()
 
     return 0;
 }
-const std::vector<Vector4f> seed = {
-    {-1, -1, -1, 1},
-    {-1, 0, -1, 1},
-    {-1, 1, -1, 1},
-    {0, -1, -1, 1},
-    {0, 1, -1, 1},
-    {1, -1, -1, 1},
-    {1, 0, -1, 1},
-    {1, 1, -1, 1},
-    {-1, -1, 0, 1},
-    {-1, 1, 0, 1},
-    {1, -1, 0, 1},
-    {1, 1, 0, 1},
-    {-1, -1, 1, 1},
-    {-1, 0, 1, 1},
-    {-1, 1, 1, 1},
-    {0, -1, 1, 1},
-    {0, 1, 1, 1},
-    {1, -1, 1, 1},
-    {1, 0, 1, 1},
-    {1, 1, 1, 1},
-};
-std::vector<Vector4f> locations = {
-    {-1, -1, -1, 1},
-    {-1, 0, -1, 1},
-    {-1, 1, -1, 1},
-    {0, -1, -1, 1},
-    {0, 1, -1, 1},
-    {1, -1, -1, 1},
-    {1, 0, -1, 1},
-    {1, 1, -1, 1},
-    {-1, -1, 0, 1},
-    {-1, 1, 0, 1},
-    {1, -1, 0, 1},
-    {1, 1, 0, 1},
-    {-1, -1, 1, 1},
-    {-1, 0, 1, 1},
-    {-1, 1, 1, 1},
-    {0, -1, 1, 1},
-    {0, 1, 1, 1},
-    {1, -1, 1, 1},
-    {1, 0, 1, 1},
-    {1, 1, 1, 1},
-};
 
 void menger(mat4x4 root,
             std::vector<mat4x4> &instances,
