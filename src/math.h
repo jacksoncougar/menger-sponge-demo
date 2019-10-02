@@ -4,7 +4,6 @@
 #include <vector>
 #include <iostream>
 #include <random>
-#include <gl/GLU.h>
 
 #define M_PI 3.141592653589793238462643
 
