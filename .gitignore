@@ -2,3 +2,8 @@
 *.ilk
 *.obj
 *.pdb
+*.exe
+
+.vs/
+.vscode/
+bin/**
