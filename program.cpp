@@ -2,7 +2,7 @@
 #define GLEW_STATIC
 #define MENGER_DEPTH 3
 #define MAX_MENGER_DEPTH 7
-#define LEGACY true
+#define LEGACY false
 
 /**
  * @file grpahics-assignment-1-part1.cpp
@@ -132,12 +132,6 @@ std::vector<Vector4f> locations = {
 
 void initialize_modern_gl()
 {
-    glDebugMessageCallback(MessageCallback, nullptr);
-    {
-        auto version = (const unsigned char *)glGetString(GL_VERSION);
-        std::cout << version << std::endl;
-    }
-
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glPolygonMode(GL_FRONT, GL_FLAT);
@@ -257,11 +251,11 @@ int main()
 
     // init glew
 
-    // if (glewInit() != GLEW_OK)
-    // {
-    //     glfwTerminate();
-    //     return -1;
-    // }
+    if (glewInit() != GLEW_OK)
+    {
+        glfwTerminate();
+        return -1;
+    }
 
     if (LEGACY)
     {

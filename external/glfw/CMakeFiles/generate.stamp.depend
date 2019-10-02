@@ -1,0 +1,22 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-3.15/Modules/BasicConfigVersion-SameMajorVersion.cmake.in
+C:/Program Files/CMake/share/cmake-3.15/Modules/CMakeCInformation.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/CMakeCommonLanguageInclude.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/CMakeLanguageInformation.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/CMakePackageConfigHelpers.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/CheckCSourceCompiles.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/CheckIncludeFile.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/CheckLibraryExists.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/Compiler/MSVC-C.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/FindPackageHandleStandardArgs.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/FindPackageMessage.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/FindThreads.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/Platform/Windows-MSVC-C.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/Platform/Windows-MSVC.cmake
+C:/Program Files/CMake/share/cmake-3.15/Modules/WriteBasicConfigVersionFile.cmake
+C:/Users/root/notes fall 2019/CPSC 453 Menger Sponge/CMakeFiles/3.15.3/CMakeCCompiler.cmake
+C:/Users/root/notes fall 2019/CPSC 453 Menger Sponge/external/glfw/CMake/modules/FindVulkan.cmake
+C:/Users/root/notes fall 2019/CPSC 453 Menger Sponge/external/glfw/CMakeLists.txt
+C:/Users/root/notes fall 2019/CPSC 453 Menger Sponge/external/glfw/src/glfw3.pc.in
+C:/Users/root/notes fall 2019/CPSC 453 Menger Sponge/external/glfw/src/glfw3Config.cmake.in
+C:/Users/root/notes fall 2019/CPSC 453 Menger Sponge/external/glfw/src/glfw_config.h.in
