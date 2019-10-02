@@ -1,0 +1,2 @@
+
+typedef Vector3f;

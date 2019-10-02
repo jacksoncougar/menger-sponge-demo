@@ -30,6 +30,8 @@ void key_callback(GLFWwindow *window, int key,
 
 void toggle_shader();
 
+void update_light(float);
+
 void capture_mouse(GLFWwindow *window);
 
 void release_mouse(GLFWwindow *window);
@@ -85,6 +87,8 @@ struct
     int iterations = MENGER_DEPTH;
     int instancecount = 1;
     int elementCount = 0;
+    Vector4f light_position = {2, 2, 2, 1};
+    Vector4f light_color = {1.0, 0.2796, 0, 1};
 } g_gl;
 
 void draw_modern_gl(GLFWwindow *window)
@@ -272,18 +276,12 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        if (LEGACY)
-        {
-            draw_legacy_gl(window);
-        }
-        else
-        {
-            draw_modern_gl(window);
-        }
+        update_light(time);
+        draw_modern_gl(window);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
+        time += 0.016;
     }
 
     glfwDestroyWindow(window);
@@ -418,6 +416,23 @@ void update_view_matrix()
 
         glUniformMatrix4fv(view_uniform_location, 1, false, &S.m00);
     }
+}
+
+void update_light(float deltatime)
+{
+    g_gl.light_position.x = 5 * sin(deltatime);
+    g_gl.light_position.z = 5 * cos(deltatime);
+
+    auto uniform_light_position =
+        glGetUniformLocation(g_gl.currentProgram,
+                             "uniform_light_position");
+    auto uniform_light_color =
+        glGetUniformLocation(g_gl.currentProgram,
+                             "uniform_light_color");
+    if (uniform_light_position >= 0)
+        glUniform4fv(uniform_light_position, 1, &g_gl.light_position.x);
+    if (uniform_light_color >= 0)
+        glUniform4fv(uniform_light_color, 1, &g_gl.light_color.x);
 }
 
 void update_projection_matrix()
@@ -572,6 +587,7 @@ void create_vao()
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 
     glVertexAttribPointer(0,
                           4,
@@ -587,25 +603,32 @@ void create_vao()
                           sizeof(Vertex),
                           (void *)sizeof(Vector4f));
 
+    glVertexAttribPointer(2,
+                          4,
+                          GL_FLOAT,
+                          GL_TRUE,
+                          sizeof(Vertex),
+                          (void *)(2 * sizeof(Vector4f)));
+
     glBindBuffer(GL_ARRAY_BUFFER, g_gl.instancebuffer);
-    glEnableVertexAttribArray(2);
     glEnableVertexAttribArray(3);
     glEnableVertexAttribArray(4);
     glEnableVertexAttribArray(5);
+    glEnableVertexAttribArray(6);
 
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_TRUE, sizeof(mat4x4),
-                          (void *)0);
     glVertexAttribPointer(3, 4, GL_FLOAT, GL_TRUE, sizeof(mat4x4),
-                          (void *)(1 * sizeof(Vector4f)));
+                          (void *)0);
     glVertexAttribPointer(4, 4, GL_FLOAT, GL_TRUE, sizeof(mat4x4),
-                          (void *)(2 * sizeof(Vector4f)));
+                          (void *)(1 * sizeof(Vector4f)));
     glVertexAttribPointer(5, 4, GL_FLOAT, GL_TRUE, sizeof(mat4x4),
+                          (void *)(2 * sizeof(Vector4f)));
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_TRUE, sizeof(mat4x4),
                           (void *)(3 * sizeof(Vector4f)));
 
-    glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
     glVertexAttribDivisor(4, 1);
     glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
 
     glBindVertexArray(0);
 }

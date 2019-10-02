@@ -1,7 +1,7 @@
 #version 330 core
 layout(location = 0) in vec4 position;
 layout(location = 1) in vec4 color;
-layout(location = 2) in mat4x4 instanceWorld;
+layout(location = 3) in mat4x4 instanceWorld;
 uniform mat4x4 projection;
 uniform mat4x4 view;
 out vec4 vcolor;
