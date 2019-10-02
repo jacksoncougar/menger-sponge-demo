@@ -10,7 +10,7 @@
         "/MD",
         "/Fe:",
         "${workspaceFolder}\\program.exe",
-        "program.cpp",
+        "src\\program.cpp",
         "glfw3.lib",
         "user32.lib",
         "kernel32.lib",
