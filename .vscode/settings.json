@@ -55,5 +55,6 @@
     "cSpell.words": [
         "Luint",
         "glfw"
-    ]
+    ],
+    "svn.ignoreMissingSvnWarning": true
 }

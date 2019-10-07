@@ -2,7 +2,6 @@
 #define GLEW_STATIC
 #define MENGER_DEPTH 3
 #define MAX_MENGER_DEPTH 7
-#define LEGACY false
 
 /**
  * @file grpahics-assignment-1-part1.cpp
@@ -99,17 +98,6 @@ void draw_modern_gl(GLFWwindow *window)
                           g_gl.elementCount,
                           g_gl.instancecount);
 }
-void GLAPIENTRY
-MessageCallback(GLenum source,
-                GLenum type,
-                GLuint id,
-                GLenum severity,
-                GLsizei length,
-                const GLchar *message,
-                const void *userParam)
-{
-    std::cout << message << std::endl;
-}
 
 std::vector<Vector4f> locations = {
     {-1, -1, -1, 1},
@@ -151,30 +139,6 @@ void initialize_modern_gl()
     update_projection_matrix();
 }
 
-void initialize_legacy_gl()
-{
-
-    static Cube cube;
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    float fov = 70.0;
-    float aspect = g_viewport.width / g_viewport.height;
-    float near = .30;
-    float far = 500.0;
-    float top = tanf(fov * M_PI / 360.0) * near;
-    float bottom = -top;
-    float left = aspect * bottom;
-    float right = aspect * top;
-    float angle = 0.0;
-
-    glFrustum(left, right, bottom, top, near, far);
-
-    glVertexPointer(4, GL_FLOAT, sizeof(Vertex), &cube.vertices[0].position);
-    glColorPointer(4, GL_FLOAT, sizeof(Vertex), &cube.vertices[0].color);
-}
-
 void menger(const int iteration)
 {
     if (iteration < 1)
@@ -193,19 +157,6 @@ void menger(const int iteration)
         glPopMatrix();
     }
     glPopMatrix();
-}
-
-void draw_legacy_gl(GLFWwindow *window)
-{
-    glBegin(GL_QUADS);
-    glPushMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslated(0, 0, -1.5);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    menger(g_gl.iterations);
-    glPopMatrix();
-    glEnd();
 }
 
 int main()
@@ -261,14 +212,7 @@ int main()
         return -1;
     }
 
-    if (LEGACY)
-    {
-        initialize_legacy_gl();
-    }
-    else
-    {
-        initialize_modern_gl();
-    }
+    initialize_modern_gl();
 
     // start render loop
 
@@ -278,10 +222,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         update_light(time);
         draw_modern_gl(window);
-
         glfwPollEvents();
         glfwSwapBuffers(window);
-        time += 0.016;
+        time += 0.016; // shrug
     }
 
     glfwDestroyWindow(window);
@@ -404,6 +347,12 @@ void update_view_matrix()
     R1.multiply(R2);
     S.multiply(R1);
 
+    auto uniform_camera_position =
+        glGetUniformLocation(g_gl.currentProgram,
+                             "uniform_camera_position");
+    if (uniform_camera_position >= 0)
+        glUniform4fv(uniform_camera_position, 1, &S.m30);
+
     {
         auto view_uniform_location =
             glGetUniformLocation(g_gl.program1, "view");
@@ -429,6 +378,7 @@ void update_light(float deltatime)
     auto uniform_light_color =
         glGetUniformLocation(g_gl.currentProgram,
                              "uniform_light_color");
+
     if (uniform_light_position >= 0)
         glUniform4fv(uniform_light_position, 1, &g_gl.light_position.x);
     if (uniform_light_color >= 0)
