@@ -1,10 +1,9 @@
 #define MOUSE_SENSITIVITY 200
-#define GLEW_STATIC
 #define MENGER_DEPTH 3
 #define MAX_MENGER_DEPTH 7
 
 /**
- * @file grpahics-assignment-1-part1.cpp
+ * @file graphics-assignment-1-part1.cpp
  * @author your name (you@domain.com)
  * @brief 
  * @version 0.1
@@ -595,7 +594,7 @@ GLuint create_shader_program(std::string vertexShaderFilename,
     std::ifstream file(vertexShaderFilename);
     if (!file.is_open())
     {
-        throw;
+        throw "invalid file";
     }
     std::string vertexShaderSource(
         (std::istreambuf_iterator<char>(file)),

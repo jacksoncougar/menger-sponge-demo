@@ -1,2 +1,1 @@
 
-typedef Vector3f;

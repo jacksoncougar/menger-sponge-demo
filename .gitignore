@@ -7,3 +7,4 @@
 .vs/
 .vscode/
 bin/**
+/out/build/x64-Debug (default)
